@@ -1,146 +1,175 @@
 <html xmlns="http://www.w3.org/1999/html">
 <head>
-  <title>PDI Progress</title> 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-  <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>PDI Progress</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 
-  <div style="margin: 20px">     
-    <div class="page-header">
-    <h1>Rodrigo Wirth <small>PDI 2014/2015</small></h1>
-    </div> 
+    <div style="margin: 20px">
+        <div class="page-header">
+            <h1>Rodrigo Wirth <small>PDI 2014/2015</small></h1>
+        </div>
 
-    <div class="well" style="width: 96%; float: left; margin: 2%">
-      <div id="chart_div" style="width: 100%; height: 200px;"></div>      
+        <div class="well" style="width: 96%; float: left; margin: 2%">
+            <p style="font-weight: bold">Overall Progress</p>
+            <div id="chart_div" style="width: 100%; height: 200px;"></div>
+        </div>
+
+        <div id="goalsCharts"></div>
+
     </div>
 
-    <div id="goalsCharts">
+    <script type="text/javascript">
+        google.load("visualization", "1", { packages: ["corechart"] });
+        google.setOnLoadCallback(loadData);
 
-    </div>
+        function loadData() {
+            $.get("https://api.trello.com/1/boards/jTR4XzQb/cards?list_fields=name&fields=name&key=9904fd0b4496779e074cee0b2db54099&token=8767ace34d0565670aca3691cdadb82dd1f11eda72570c2399fb35aa15f74341&checklists=all ", function (data) {
+                drawChart(data);
+            });
+        }
 
-  </div>
+        function drawChart(trelloData) {
 
-  <script type="text/javascript">
-    google.load("visualization", "1", {packages:["corechart"]});      
-    google.setOnLoadCallback(loadData);
+            //Main Chart
+            processMainChart(trelloData);
 
-    function loadData()
-    {
-      $.get( "https://api.trello.com/1/boards/jTR4XzQb/cards?list_fields=name&fields=name&key=9904fd0b4496779e074cee0b2db54099&token=8767ace34d0565670aca3691cdadb82dd1f11eda72570c2399fb35aa15f74341&checklists=all ", function( data ) {
-        drawChart(data);
-      });
-    }
+            //Goals
+            processGoals(trelloData);
+        }
 
-    function drawChart(trelloData) {   
+        function processMainChart(trelloData)
+        {
+            var expected = CalculateMainExpected();
+            var realized = CalculateMainRealized(trelloData);
 
-    //Main Chart
-    var expected = CalculateMainExpected();
-    var realized = CalculateMainRealized(trelloData);
+            expected = toDecimal(expected);
+            realized = toDecimal(realized);
 
-    expected = toDecimal(expected);
-    realized = toDecimal(realized);
+            var data = google.visualization.arrayToDataTable([
+              ['Progress', 'Progress', { role: 'style' }],
+              ['Realized', realized, 'blue'],
+              ['Expected', expected, 'green'],
+            ]);
 
-    var data = google.visualization.arrayToDataTable([
-      ['Progress', 'Progress', { role: 'style' }],
-      ['Realized',  realized, 'blue'],
-      ['Expected',  expected, 'green'],          
-      ]);
+            var options = {                
+                legend: { position: "none" },
+                hAxis: { maxValue: 100, minValue: 0 }
+            };
 
-    var options = {
-      title: 'Overall Progress',
-      legend: { position: "none" },
-      hAxis: {maxValue: 100, minValue: 0}
-    };
+            var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+            chart.draw(data, options);
+        }
 
-    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
+        function CalculateMainRealized(data) {
 
-    //Goals
-    trelloData.forEach(function(card){
-      //Count
-      var checkItemsCount = 0;
-      var completedCheckItemsCount = 0;
+            var estimateSum = sumEstimates(data);
+            var totalProgress = 0;
 
-      card.checklists.forEach(function(checklist){
-       checklist.checkItems.forEach(function(checkItem){
-        checkItemsCount++;
+            data.forEach(function (card) {
 
-        if (checkItem.state === 'complete')
-          completedCheckItemsCount++;
-      });
-     });
+                var cardEstimate = getEstimate(card.name);
 
-      //Calculate
-      var goalRealized = (completedCheckItemsCount * 100) / checkItemsCount;
-      goalRealized = toDecimal(goalRealized);
+                var checkItemsCount = 0;
+                var completedCheckItemsCount = 0;
 
-       //Add chart div
-       $('#goalsCharts').append('<div class="well" style="width: 46%; float: left; margin: 2%"><p style="font-weight: bold">' + card.name + '</p><div id="' + card.id + '" style="width: 100%; height: 100px;"></div></div>');
+                card.checklists.forEach(function (checklist) {
 
-      //Create chart
-      var goalData = google.visualization.arrayToDataTable([
-        ['Progress', 'Progress'],
-        ['',  goalRealized]              
-        ]);
+                    checklist.checkItems.forEach(function (checkItem) {
+                        checkItemsCount++;
 
-      var goalOptions = {        
-        legend: { position: "none" },
-        hAxis: {maxValue: 100, minValue: 0}
-      };
+                        if (checkItem.state === 'complete')
+                            completedCheckItemsCount++;
+                    })
 
-      var goalChart = new google.visualization.BarChart(document.getElementById(card.id));
-      goalChart.draw(goalData, goalOptions);
+                })
 
-    });
+                var weight = (cardEstimate * 100) / estimateSum;
+                var cardProgress = (completedCheckItemsCount / checkItemsCount) * weight;
 
+                totalProgress = totalProgress + cardProgress;
+            });
 
-}
+            return totalProgress;
+        }
 
-function CalculateMainRealized(data)
-{
-  var checkItemsCount = 0;
-  var completedCheckItemsCount = 0;
+        function CalculateMainExpected() {
+            var oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+            var startDate = new Date(2014, 05, 01);
+            var endDate = new Date(2015, 03, 31);
 
-  data.forEach(function(card){
+            var pdiTime = Math.round(Math.abs((startDate.getTime() - endDate.getTime()) / (oneDay)));
+            var currentTime = Math.round(Math.abs((startDate.getTime() - new Date().getTime()) / (oneDay)));
 
-    card.checklists.forEach(function(checklist){
+            var expectedPercent = (currentTime * 100) / pdiTime;
+            return expectedPercent;            
+        }
 
-      checklist.checkItems.forEach(function(checkItem){
-        checkItemsCount++;
+        function processGoals(trelloData) {
+            trelloData.forEach(function (card) {
+                //Count
+                var checkItemsCount = 0;
+                var completedCheckItemsCount = 0;
 
-        if (checkItem.state === 'complete')
-          completedCheckItemsCount++;
-      })
+                card.checklists.forEach(function (checklist) {
+                    checklist.checkItems.forEach(function (checkItem) {
+                        checkItemsCount++;
 
-    })
+                        if (checkItem.state === 'complete')
+                            completedCheckItemsCount++;
+                    });
+                });
 
-  });
+                //Calculate
+                var goalRealized = (completedCheckItemsCount * 100) / checkItemsCount;
+                goalRealized = toDecimal(goalRealized);
 
-  var realizedPercent = (completedCheckItemsCount * 100) / checkItemsCount;
+                //Add chart div
+                $('#goalsCharts').append('<div class="well" style="width: 46%; float: left; margin: 2%"><p style="font-weight: bold">' + card.name + '</p><div id="' + card.id + '" style="width: 100%; height: 100px;"></div></div>');
 
-  return realizedPercent;
-}
+                //Create chart
+                var goalData = google.visualization.arrayToDataTable([
+                  ['Progress', 'Progress'],
+                  ['', goalRealized]
+                ]);
 
-function CalculateMainExpected()
-{
-    var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
-    var startDate = new Date(2014,05,01);
-    var endDate = new Date(2015,03,31);
+                var goalOptions = {
+                    legend: { position: "none" },
+                    hAxis: { maxValue: 100, minValue: 0 }
+                };
 
-    var pdiTime = Math.round(Math.abs((startDate.getTime() - endDate.getTime())/(oneDay)));
-    var currentTime = Math.round(Math.abs((startDate.getTime() - new Date().getTime())/(oneDay)));
+                var goalChart = new google.visualization.BarChart(document.getElementById(card.id));
+                goalChart.draw(goalData, goalOptions);
 
-    var expectedPercent = (currentTime * 100) / pdiTime;
-    return expectedPercent;
-  }
+            });
+        }
 
-  function toDecimal(value) {
-    return Math.round(value * 100) / 100;
-  }
+        function getEstimate(cardName) {
+            var startIndex = cardName.indexOf('(') + 1;
+            var endIndex = cardName.indexOf(')');
+            var estimate = cardName.substring(startIndex, endIndex);
 
-</script>
+            return parseInt(estimate);
+        }
+
+        function toDecimal(value) {
+            return Math.round(value * 100) / 100;
+        }
+
+        function sumEstimates(trelloData) {
+            var estimateSum = 0;
+
+            trelloData.forEach(function (card) {
+                var cardEstimate = getEstimate(card.name);
+                estimateSum = estimateSum + cardEstimate;
+            });
+
+            return estimateSum;
+        }
+
+    </script>
 
 </body>
 </html>
