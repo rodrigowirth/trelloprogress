@@ -4,13 +4,41 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        .badge {
+            float: left;
+            height: 18px;
+            margin: 0 3px 3px 0;
+            padding: 0 4px 0 0;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .badge-points {
+            font-size: 11px;
+            line-height: 16px;
+            text-align: right;
+            background-color: rgb(0, 101, 128);
+            border-color: rgb(0, 91, 114) rgb(0, 91, 114) rgb(0, 75, 95);
+            color: rgb(225, 250, 251);
+            background-repeat: no-repeat;
+            background-position: 3px 3px;
+            padding: 0px 4px 0px 17px;
+            display: block;
+        }
+
+       
+    </style>
 </head>
 <body>
 
     <div style="margin: 20px">
         <div class="page-header">
-            <a href="https://trello.com/b/jTR4XzQb/rodrigo-wirth" style="float: right"><img src="http://dab1nmslvvntp.cloudfront.net/wp-content/uploads/2014/07/1404909698trello-icon.png" style="width:30px" /></a> 
-            <h1>Rodrigo Wirth <small>PDI 2014/2015</small></h1>            
+            <a href="https://trello.com/b/jTR4XzQb/rodrigo-wirth" style="float: right">
+                <img src="http://dab1nmslvvntp.cloudfront.net/wp-content/uploads/2014/07/1404909698trello-icon.png" style="width:30px" />
+            </a>
+            <h1>Rodrigo Wirth <small>PDI 2014/2015</small></h1>
         </div>
 
 
@@ -42,8 +70,7 @@
             processGoals(trelloData);
         }
 
-        function processMainChart(trelloData)
-        {
+        function processMainChart(trelloData) {
             var expected = CalculateMainExpected();
             var realized = CalculateMainRealized(trelloData);
 
@@ -56,7 +83,7 @@
               ['Expected', expected, 'green'],
             ]);
 
-            var options = {                
+            var options = {
                 legend: { position: "none" },
                 hAxis: { maxValue: 100, minValue: 0 }
             };
@@ -106,7 +133,7 @@
             var currentTime = Math.round(Math.abs((startDate.getTime() - new Date().getTime()) / (oneDay)));
 
             var expectedPercent = (currentTime * 100) / pdiTime;
-            return expectedPercent;            
+            return expectedPercent;
         }
 
         function processGoals(trelloData) {
@@ -128,8 +155,12 @@
                 var goalRealized = (completedCheckItemsCount * 100) / checkItemsCount;
                 goalRealized = toDecimal(goalRealized);
 
+                //Process card name
+                var estimate = getEstimate(card.name);
+                var mask = '<div class="badge badge-points point-count" style="background-image: url(chrome-extension://jdbcdblgjdpmfninkoogcfpnkjmndgje/images/storypoints-icon.png)" title="This card has ' + estimate + ' storypoints.">' + estimate + '</div>';
+
                 //Add chart div
-                $('#goalsCharts').append('<div class="well" style="width: 46%; float: left; margin: 2%"><p style="font-weight: bold">' + card.name + '</p><div id="' + card.id + '" style="width: 100%; height: 100px;"></div></div>');
+                $('#goalsCharts').append('<div class="well" style="width: 46%; float: left; margin: 2%">' + mask + '<p style="font-weight: bold">' + removeEstimate(card.name) + '</p><div id="' + card.id + '" style="width: 100%; height: 100px;"></div></div>');
 
                 //Create chart
                 var goalData = google.visualization.arrayToDataTable([
@@ -169,6 +200,13 @@
             });
 
             return estimateSum;
+        }
+
+        function removeEstimate(cardName)
+        {
+            var startIndex = cardName.indexOf(')') + 2;
+            var endIndex = cardName.lenght;
+            return cardName.substring(startIndex, endIndex);
         }
 
     </script>
