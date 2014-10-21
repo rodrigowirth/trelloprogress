@@ -1,0 +1,15 @@
+Key: 9904fd0b4496779e074cee0b2db54099
+Secret: 1ea32f196298607f3585ec03a6c7f4c248c9c5a5a1d15ad068aefba95da08669
+
+
+
+https://api.trello.com/1/boards/jTR4XzQb/cards?list_fields=name&fields=name&key=9904fd0b4496779e074cee0b2db54099&token=8767ace34d0565670aca3691cdadb82dd1f11eda72570c2399fb35aa15f74341&checklists=all 
+
+
+https://trello.com/1/authorize?key=9904fd0b4496779e074cee0b2db54099&scope=read%2Cwrite&name=Applicantion&expiration=never&response_type=token
+
+8767ace34d0565670aca3691cdadb82dd1f11eda72570c2399fb35aa15f74341
+
+
+
+
