@@ -89,7 +89,7 @@
             };
 
             var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
-            chart.draw(data, options);
+            chart.draw(data, options);            
         }
 
         function CalculateMainRealized(data) {
@@ -137,6 +137,8 @@
         }
 
         function processGoals(trelloData) {
+            var mainExpected = CalculateMainExpected();
+
             trelloData.forEach(function (card) {
                 //Count
                 var checkItemsCount = 0;
@@ -163,9 +165,17 @@
                 $('#goalsCharts').append('<div class="well" style="width: 46%; float: left; margin: 2%">' + mask + '<p style="font-weight: bold">' + removeEstimate(card.name) + '</p><div id="' + card.id + '" style="width: 100%; height: 100px;"></div></div>');
 
                 //Create chart
+                var color = 'blue';
+                if (goalRealized < (mainExpected * 0.7))
+                    color = 'red';
+                else if (goalRealized < mainExpected)
+                    color = '#fff000';
+                else if (goalRealized == 100)
+                    color = 'green';
+
                 var goalData = google.visualization.arrayToDataTable([
-                  ['Progress', 'Progress'],
-                  ['', goalRealized]
+                  ['Progress', 'Progress', { role: 'style' }],
+                  ['', goalRealized, color]
                 ]);
 
                 var goalOptions = {

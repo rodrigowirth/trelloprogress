@@ -8,7 +8,7 @@ https://api.trello.com/1/boards/jTR4XzQb/cards?list_fields=name&fields=name&key=
 
 https://trello.com/1/authorize?key=9904fd0b4496779e074cee0b2db54099&scope=read%2Cwrite&name=Applicantion&expiration=never&response_type=token
 
-8767ace34d0565670aca3691cdadb82dd1f11eda72570c2399fb35aa15f74341
+Rodrigo Wirth's token: 8767ace34d0565670aca3691cdadb82dd1f11eda72570c2399fb35aa15f74341
 
 
 
