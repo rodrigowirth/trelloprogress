@@ -124,11 +124,26 @@
             return totalProgress;
         }
 
+        Date.daysBetween = function (date1, date2) {
+            //Get 1 day in milliseconds
+            var one_day = 1000 * 60 * 60 * 24;
+
+            // Convert both dates to milliseconds
+            var date1_ms = date1.getTime();
+            var date2_ms = date2.getTime();
+
+            // Calculate the difference in milliseconds
+            var difference_ms = date2_ms - date1_ms;
+
+            // Convert back to days and return
+            return Math.round(difference_ms / one_day);
+        }
+
         function CalculateMainExpected() {
             var oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-            var startDate = new Date(2014, 05, 01);
-            var endDate = new Date(2015, 03, 31);
-
+            var startDate = new Date(2014, 04, 01);
+            var endDate = new Date(2015, 02, 31);
+            
             var pdiTime = Math.round(Math.abs((startDate.getTime() - endDate.getTime()) / (oneDay)));
             var currentTime = Math.round(Math.abs((startDate.getTime() - new Date().getTime()) / (oneDay)));
 
